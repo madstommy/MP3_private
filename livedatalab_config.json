@@ -1,0 +1,4 @@
+{ "prescript_commands": [ "pip install --upgrade numpy==1.14 requests"
+],
+    "entrypoint": "mp3_grader"
+}
