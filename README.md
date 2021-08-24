@@ -1,5 +1,5 @@
 # MP3: Implementing the PLSA Algorithm
-## DUE: November 8, 2020 at 11:59pm
+## DUE: November 8, 2021 at 11:59pm
 
 In this MP, you will implement the PLSA algorithm discussed in lectures [9.7](https://www.coursera.org/learn/cs-410/lecture/HKe8K/9-7-probabilistic-latent-semantic-analysis-plsa-part-1) and [9.8](https://www.coursera.org/learn/cs-410/lecture/GJyGG/9-8-probabilistic-latent-semantic-analysis-plsa-part-2) of the Text Mining Coursera course.
 You are not required to implement the PLSA algorithm with a background model (we will run tests assuming the background model has not been implemented). You are provided with two data sets in the `data` folder: `test.txt` and `dblp.txt`. You can assume that each line is a separate document.
