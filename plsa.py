@@ -48,9 +48,15 @@ class Corpus(object):
         # #############################
         # your code here
         # #############################
+        file = open(self.documents_path, 'r')
+        for line in file:
+            new_line = line.split()
+            if new_line[0] == '0' or new_line[0] == '1':
+                self.documents.append(new_line[1:-1])
+            else:
+                self.documents.append(new_line)
+        self.number_of_documents = len(self.documents)
         
-        pass    # REMOVE THIS
-
     def build_vocabulary(self):
         """
         Construct a list of unique words in the whole corpus. Put it in self.vocabulary
@@ -61,8 +67,13 @@ class Corpus(object):
         # #############################
         # your code here
         # #############################
+        vocab_set = set()
+        for doc in self.documents:
+            for word in doc:
+                vocab_set.add(word)
         
-        pass    # REMOVE THIS
+        self.vocabulary = list(vocab_set)
+        self.vocabulary_size = len(self.vocabulary)
 
     def build_term_doc_matrix(self):
         """
@@ -74,9 +85,12 @@ class Corpus(object):
         # ############################
         # your code here
         # ############################
-        
-        pass    # REMOVE THIS
+        self.term_doc_matrix = np.zeros( (len(self.documents), self.vocabulary_size))
 
+        for i in range(len(self.documents)):
+            for word in self.documents[i]:
+                j = self.vocabulary.index(word)
+                self.term_doc_matrix[i][j]+=1
 
     def initialize_randomly(self, number_of_topics):
         """
@@ -89,8 +103,11 @@ class Corpus(object):
         # ############################
         # your code here
         # ############################
+        self.document_topic_prob = np.random.random( (len(self.documents), number_of_topics) )
+        self.topic_word_prob = np.random.random( (number_of_topics, len(self.vocabulary) ))
 
-        pass    # REMOVE THIS
+        self.document_topic_prob = normalize(self.document_topic_prob)
+        self.topic_word_prob = normalize(self.topic_word_prob)
         
 
     def initialize_uniformly(self, number_of_topics):
@@ -119,34 +136,49 @@ class Corpus(object):
     def expectation_step(self):
         """ The E-step updates P(z | w, d)
         """
-        print("E step:")
+        #print("E step:")
         
         # ############################
         # your code here
         # ############################
-
-        pass    # REMOVE THIS
+        for i in range(len(self.document_topic_prob)):
+            scalar_multiples = []
+            for j in range(len(self.document_topic_prob[0])):
+                pi_d_j = self.document_topic_prob[i][j]
+                one_row = pi_d_j * self.topic_word_prob[j]
+                scalar_multiples.append(one_row)
+            self.topic_prob[i] =  np.transpose(normalize(np.transpose(scalar_multiples)))
             
 
     def maximization_step(self, number_of_topics):
         """ The M-step updates P(w | z)
         """
-        print("M step:")
+        #print("M step:")
         
         # update P(w | z)
         
         # ############################
         # your code here
         # ############################
-
+        for i in range(len(self.term_doc_matrix[0])):
+            word_counts = self.term_doc_matrix[ :,i]
+            for j in range(number_of_topics):
+                word_probs = self.topic_prob[ :, j, i]
+                self.topic_word_prob[j][i] = np.dot(word_counts, word_probs)
+        self.topic_word_prob = normalize(self.topic_word_prob)
         
         # update P(z | d)
 
         # ############################
         # your code here
         # ############################
-        
-        pass    # REMOVE THIS
+        for i in range(len(self.document_topic_prob)):
+            word_counts = self.term_doc_matrix[i]
+            for j in range(number_of_topics):
+                word_probs = self.topic_prob[i][j]
+                self.document_topic_prob[i][j] = np.dot(word_counts, word_probs)
+        self.document_topic_prob = normalize(self.document_topic_prob)
+
 
 
     def calculate_likelihood(self, number_of_topics):
@@ -159,8 +191,16 @@ class Corpus(object):
         # ############################
         # your code here
         # ############################
+        result = 0
+        for i in range(len(self.document_topic_prob)):
+            word_counts = self.term_doc_matrix[i]
+            for j in range(len(word_counts)):
+                pi_d_j = self.topic_prob[i, :, j]
+                word_probs = self.topic_word_prob[:, j]
+                result += word_counts[j] * math.log2(np.dot(pi_d_j, word_probs))
         
-        return
+        self.likelihoods.append(result)
+        return result
 
     def plsa(self, number_of_topics, max_iter, epsilon):
 
@@ -182,6 +222,7 @@ class Corpus(object):
 
         # Run the EM algorithm
         current_likelihood = 0.0
+        previous_likelihood = 0.0
 
         for iteration in range(max_iter):
             print("Iteration #" + str(iteration + 1) + "...")
@@ -189,9 +230,14 @@ class Corpus(object):
             # ############################
             # your code here
             # ############################
-
-            pass    # REMOVE THIS
-
+            self.expectation_step()
+            self.maximization_step(number_of_topics)
+            previous_likelihood = current_likelihood
+            current_likelihood = self.calculate_likelihood(number_of_topics)
+            print(current_likelihood)
+            if abs(current_likelihood - previous_likelihood) < epsilon:
+                break
+        print("Algorithm Complete. Final Likelihood is {}".format(current_likelihood))
 
 
 def main():
@@ -200,6 +246,7 @@ def main():
     corpus.build_corpus()
     corpus.build_vocabulary()
     print(corpus.vocabulary)
+    print(corpus.term_doc_matrix)
     print("Vocabulary size:" + str(len(corpus.vocabulary)))
     print("Number of documents:" + str(len(corpus.documents)))
     number_of_topics = 2
