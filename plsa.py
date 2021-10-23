@@ -197,7 +197,7 @@ class Corpus(object):
             for j in range(len(word_counts)):
                 pi_d_j = self.topic_prob[i, :, j]
                 word_probs = self.topic_word_prob[:, j]
-                result += word_counts[j] * math.log2(np.dot(pi_d_j, word_probs))
+                result += word_counts[j] * math.log(np.dot(pi_d_j, word_probs), 2)
         
         self.likelihoods.append(result)
         return result
